@@ -707,6 +707,12 @@ module Homebrew
         default:     true,
         hidden:      true,
       },
+      HOMEBREW_SHUT_UP_ABOUT_UNSUPPORTED_OS:     {
+        description: "If set, do not warn that Homebrew does not support this macOS version or architecture. " \
+                     "Set by default. Add `unset HOMEBREW_SHUT_UP_ABOUT_UNSUPPORTED_OS` to `brew.env` " \
+                     "to show the warning again.",
+        boolean:     :set,
+      },
       HOMEBREW_SIMULATE_MACOS_ON_LINUX:          {
         description: "If set, running Homebrew on Linux will simulate certain macOS code paths. This is useful " \
                      "when auditing macOS formulae while on Linux.",
