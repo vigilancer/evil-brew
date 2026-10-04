@@ -211,29 +211,55 @@ module Homebrew
           "#{missing_count} missing #{Formatter.error("✘")}"
       end
 
-      sig { params(full_name: String, name: String).returns(T::Array[String]) }
-      def self.installed_dependent_names(full_name, name)
-        Formula.racks.filter_map do |rack|
-          keg = Keg.from_rack(rack)
-          next unless keg
+      # Installed formulae that declare `formula` as a dependency, grouped the way
+      # `brew uses` classifies them. Implicit deps are listed only as implicit:
+      # Homebrew tags those with `:build` and `:test` as well.
+      sig { params(formula: Formula).returns(T::Array[String]) }
+      def self.installed_dependent_lines(formula)
+        names_by_type = T.let({
+          "Build"       => [],
+          "Required"    => [],
+          "Recommended" => [],
+          "Optional"    => [],
+          "Test"        => [],
+          "Implicit"    => [],
+        }, T::Hash[String, T::Array[String]])
 
-          tab_path = keg/AbstractTab::FILENAME
-          next unless tab_path.file?
+        Formula.installed.each do |dependent|
+          next if dependent.full_name == formula.full_name
 
-          # Fast path: skip JSON parsing when the formula name
-          # does not appear anywhere in the raw receipt.
-          content = File.read(tab_path)
-          next unless content.include?(name)
+          dependent.deps.each do |dep|
+            next unless dependency_named?(dep, formula)
 
-          tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
-          next unless tab_deps
-
-          dependent = tab_deps.any? do |dep|
-            dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-            dep_full_name == full_name || dep_full_name&.then { Utils.name_from_full_name(it) } == name
+            if dep.implicit?
+              names_by_type.fetch("Implicit") << dependent.full_name
+            else
+              names_by_type.fetch("Build") << dependent.full_name if dep.build?
+              names_by_type.fetch("Test") << dependent.full_name if dep.test?
+              names_by_type.fetch("Optional") << dependent.full_name if dep.optional?
+              names_by_type.fetch("Recommended") << dependent.full_name if dep.recommended?
+              names_by_type.fetch("Required") << dependent.full_name if dep.required?
+            end
           end
-          keg.name if dependent
-        end.sort.uniq
+        end
+
+        names_by_type.filter_map do |type, names|
+          names = names.uniq.sort
+          next if names.empty?
+
+          "#{type} (#{names.length}): #{names.join(", ")}"
+        end
+      end
+
+      sig { params(dep: Dependency, formula: Formula).returns(T::Boolean) }
+      def self.dependency_named?(dep, formula)
+        if dep.name.include?("/")
+          dep.to_formula.full_name == formula.full_name
+        else
+          dep.name == formula.name || dep.name == formula.full_name
+        end
+      rescue FormulaUnavailableError
+        false
       end
 
       sig { params(formula: Formula).returns(T::Array[String]) }
@@ -541,11 +567,6 @@ module Homebrew
         end
 
         tab_runtime_deps = kegs.last&.runtime_dependencies
-        installed_dependents = if $stdout.tty? && kegs.any?
-          self.class.installed_dependent_names(formula.full_name, formula.name)
-        else
-          [].freeze
-        end
         dependency_lines = %w[build required recommended optional].filter_map do |type|
           next if type == "build" &&
                   (kegs.all? { |keg| keg.tab.poured_from_bottle } ||
@@ -563,7 +584,7 @@ module Homebrew
             "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
                                      formula_outdated: outdated, missing_library_deps:)}"
         end
-        if dependency_lines.present? || tab_runtime_deps.present? || installed_dependents.any?
+        if dependency_lines.present? || tab_runtime_deps.present?
           ohai "Dependencies"
           puts dependency_lines
           missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
@@ -582,12 +603,13 @@ module Homebrew
             puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
                  "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
           end
-          if installed_dependents.any?
-            if args.verbose?
-              puts "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
-            else
-              puts "Dependents: #{installed_dependents.count}"
-            end
+        end
+
+        if $stdout.tty?
+          dependent_lines = self.class.installed_dependent_lines(formula)
+          if dependent_lines.any?
+            ohai "Dependents"
+            puts dependent_lines
           end
         end
 
