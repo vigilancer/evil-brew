@@ -77,6 +77,7 @@ module Homebrew
                depends_on:  "--json",
                description: "Include the variations hash in each formula's JSON output."
         switch "-v", "--verbose",
+               env:         :info_verbose,
                description: "Show more verbose data for <formula>, or full information with `--installed`."
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."

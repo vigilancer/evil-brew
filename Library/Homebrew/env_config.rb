@@ -813,6 +813,11 @@ module Homebrew
         description: "If set, always assume `--verbose` when running commands.",
         boolean:     :set,
       },
+      EVILBREW_INFO_VERBOSE:                     {
+        description: "If set, `brew info` shows the same output as `--verbose`. " \
+                     "Set by default. Set `EVILBREW_INFO_VERBOSE=` in `brew.env` to turn it off.",
+        boolean:     true,
+      },
       HOMEBREW_VERBOSE_USING_DOTS:               {
         description: "If set, verbose output will print a `.` no more than once a minute. This can be " \
                      "useful to avoid long-running Homebrew commands being killed due to no output.",

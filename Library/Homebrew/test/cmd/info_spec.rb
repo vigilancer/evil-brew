@@ -1724,4 +1724,11 @@ RSpec.describe Homebrew::Cmd::Info do
                "#{formula_path.relative_path_from(tap.path)}")
     end
   end
+
+  it "enables --verbose when EVILBREW_INFO_VERBOSE is set" do
+    ENV["EVILBREW_INFO_VERBOSE"] = "1"
+    expect(described_class.new([]).args.verbose?).to be true
+  ensure
+    ENV.delete("EVILBREW_INFO_VERBOSE")
+  end
 end
