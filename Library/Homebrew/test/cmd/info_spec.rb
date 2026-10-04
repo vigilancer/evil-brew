@@ -624,7 +624,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     expected_output = Regexp.new(
       "==> Dependencies\nRequired \\(1\\): .*bar.*\n" \
-      "Recursive Runtime \\(2\\): 1 installed .*✔, 1 missing .*✘\n" \
+      "Recursive Runtime \\(2\\): installed-dep .*✔, missing-dep .*✘\n" \
       "==> Dependents\nRequired \\(1\\): some-dependent",
     )
     expect { info.info_formula(formula) }
@@ -679,7 +679,7 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  it "summarises recursive runtime dependencies as all installed when none are missing" do
+  it "lists recursive runtime dependency names when all are installed" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new([])
@@ -711,7 +711,7 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(direct_dependency).to receive(:satisfied?).and_return(true)
 
     expect { info.info_formula(formula) }
-      .to output(/Recursive Runtime \(1\): all installed .*✔/).to_stdout
+      .to output(/Recursive Runtime \(1\): installed-dep .*✔/).to_stdout
       .and not_to_output(/missing/).to_stdout
       .and not_to_output.to_stderr
   end
