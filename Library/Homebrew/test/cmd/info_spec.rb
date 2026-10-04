@@ -569,7 +569,7 @@ RSpec.describe Homebrew::Cmd::Info do
     expect(JSON.parse(output).first["tap"]).to eq("homebrew/core")
   end
 
-  it "prints required, recursive runtime, and dependent counts in the dependencies section" do
+  it "prints required and recursive runtime dependencies, and installed dependents" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new([])
@@ -611,13 +611,21 @@ RSpec.describe Homebrew::Cmd::Info do
     ]
     dependent_tab.write
 
+    some_dependent = formula("some-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/some-dependent-1.0.tar.gz"
+      depends_on "testball"
+    end
+    allow(Formula).to receive(:installed).and_return([some_dependent])
+
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
     allow(direct_dependency).to receive(:satisfied?).and_return(true)
 
     expected_output = Regexp.new(
       "==> Dependencies\nRequired \\(1\\): .*bar.*\n" \
-      "Recursive Runtime \\(2\\): 1 installed .*✔, 1 missing .*✘\nDependents: 1",
+      "Recursive Runtime \\(2\\): 1 installed .*✔, 1 missing .*✘\n" \
+      "==> Dependents\nRequired \\(1\\): some-dependent",
     )
     expect { info.info_formula(formula) }
       .to output(expected_output).to_stdout
@@ -625,7 +633,7 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  it "lists installed dependents inline under Dependencies with --verbose" do
+  it "lists installed dependents by dependency type" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new(["--verbose"])
@@ -653,11 +661,20 @@ RSpec.describe Homebrew::Cmd::Info do
       dependent_tab.write
     end
 
+    installed = %w[some-dependent another-dependent].map do |dependent_name|
+      formula(dependent_name) do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/#{dependent_name}-1.0.tar.gz"
+        depends_on "testball"
+      end
+    end
+    allow(Formula).to receive(:installed).and_return(installed)
+
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
 
     expect { info.info_formula(formula) }
-      .to output(/^Dependents \(2\): another-dependent, some-dependent$/).to_stdout
+      .to output(/==> Dependents\nRequired \(2\): another-dependent, some-dependent/).to_stdout
       .and not_to_output(/^Dependents: /).to_stdout
       .and not_to_output.to_stderr
   end
