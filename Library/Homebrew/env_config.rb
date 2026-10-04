@@ -168,6 +168,12 @@ module Homebrew
         description:  "Use this as the browser when opening project homepages.",
         default_text: "`$BROWSER` or the OS's default browser.",
       },
+      EVILBREW_BUILD_FROM_SOURCES_YOU_PHILISTINE: {
+        description: "If set, build formulae and their dependencies from source even when bottles are available. " \
+                     "Set by default. Set `EVILBREW_BUILD_FROM_SOURCES_YOU_PHILISTINE=` in `brew.env` " \
+                     "to use bottles again.",
+        boolean:     :set,
+      },
       **BUNDLE_DISABLE_ENVS.select { |env,| env < :HOMEBREW_BUNDLE_DESCRIBE },
       HOMEBREW_BUNDLE_DESCRIBE:                  {
         description: "If set, add a description comment above each line in `brew bundle dump` and " \
