@@ -626,6 +626,11 @@ module Formulary
         tap = Homebrew::API.tap_from_source_download(path)
       end
 
+      if tap.nil? && (overlay = Homebrew::EnvConfig.formula_overlay_directory) &&
+         ::Utils::Path.child_of?(overlay, path)
+        tap = CoreTap.instance
+      end
+
       return if path.extname != ".rb"
 
       if path.parent.basename.to_s == ".brew"
@@ -915,6 +920,33 @@ module Formulary
     def klass(flags:, ignore_errors:)
       namespace = "FormulaNamespace#{Digest::MD5.hexdigest(contents.to_s)}"
       Formulary.load_formula(name, path, contents, namespace, flags:, ignore_errors:, from_metadata: @from_metadata)
+    end
+  end
+
+  # Loads a formula file from the overlay directory before the API.
+  class FromOverlayLoader < FormulaLoader
+    sig {
+      params(ref: T.any(String, Pathname, URI::Generic), from: T.nilable(Symbol), warn: T::Boolean)
+        .returns(T.nilable(T.attached_class))
+    }
+    def self.try_new(ref, from: nil, warn: false)
+      return unless ref.is_a?(String)
+
+      directory = Homebrew::EnvConfig.formula_overlay_directory
+      return if directory.nil?
+
+      name = ref[HOMEBREW_DEFAULT_TAP_FORMULA_REGEX, :name]
+      return if name.blank?
+
+      path = directory/"#{name.downcase}.rb"
+      return unless path.file?
+
+      new(name.downcase, path)
+    end
+
+    sig { params(name: String, path: Pathname).void }
+    def initialize(name, path)
+      super(name, path, tap: CoreTap.instance)
     end
   end
 
@@ -1235,6 +1267,7 @@ module Formulary
     [
       FromBottleLoader,
       FromURILoader,
+      FromOverlayLoader,
       FromAPILoader,
       FromTapLoader,
       FromPathLoader,

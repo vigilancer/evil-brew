@@ -174,10 +174,17 @@ module SystemConfig
       out.puts "HOMEBREW_REPOSITORY: #{repository}" if repository.to_s != Homebrew::DEFAULT_REPOSITORY.to_s
       out.puts "HOMEBREW_CELLAR: #{cellar}" if cellar.to_s != Homebrew::DEFAULT_CELLAR.to_s
 
-      Homebrew::EnvConfig.non_default_variables.each do |env|
+      envs = Homebrew::EnvConfig.non_default_variables
+      envs << "HOMEBREW_FORMULA_OVERLAY" unless envs.include?("HOMEBREW_FORMULA_OVERLAY")
+      envs.sort.each do |env|
         env_symbol = env.to_sym
         hash = Homebrew::EnvConfig::ENVS.fetch(env_symbol)
         value = Homebrew::EnvConfig.public_send(Homebrew::EnvConfig.env_method_name(env_symbol, hash))
+
+        if env == "HOMEBREW_FORMULA_OVERLAY"
+          out.puts "#{env}: #{Homebrew::EnvConfig.formula_overlay_path}"
+          next
+        end
 
         if hash[:boolean]
           out.puts "#{env}: #{value ? "set" : "false"}"

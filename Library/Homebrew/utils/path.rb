@@ -250,6 +250,10 @@ module Utils
         trusted_package_root(Cask::Caskroom.path)
       end
 
+      if (overlay = Homebrew::EnvConfig.formula_overlay_directory)
+        allowed_paths << trusted_package_root(overlay)
+      end
+
       # Casks can also be loaded from local JSON files, not just Ruby.
       package_extnames = (package_type == :cask) ? %w[.rb .json] : %w[.rb]
       return true if package_extnames.none? { |ext| path_realpath.end_with?(ext) || path_string.end_with?(ext) }
