@@ -593,15 +593,16 @@ module Homebrew
             puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
           if tab_runtime_deps.present?
-            installed_count = tab_runtime_deps.count do |dep|
-              dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
-              next false unless dep_name
+            runtime_names = tab_runtime_deps.filter_map do |dep|
+              full_name = dep["full_name"]
+              next if full_name.blank?
 
+              dep_name = Utils.name_from_full_name(full_name)
               rack = HOMEBREW_CELLAR/dep_name
-              rack.directory? && !rack.subdirs.empty?
+              installed = rack.directory? && !rack.subdirs.empty?
+              pretty_install_status(dep_name, installed:, mark_uninstalled: true, bold: false)
             end
-            puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
-                 "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
+            puts "Recursive Runtime (#{runtime_names.count}): #{runtime_names.join(", ")}"
           end
         end
 
