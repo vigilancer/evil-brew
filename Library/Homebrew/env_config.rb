@@ -707,6 +707,12 @@ module Homebrew
         default:     true,
         hidden:      true,
       },
+      EVILBREW_SHUT_UP_ABOUT_UNSUPPORTED_OS:         {
+        description: "If set, do not warn that Homebrew does not support this macOS version or architecture. " \
+                     "Set by default. Set `EVILBREW_SHUT_UP_ABOUT_UNSUPPORTED_OS=` in `brew.env` " \
+                     "to show the warning again.",
+        boolean:     :set,
+      },
       HOMEBREW_SIMULATE_MACOS_ON_LINUX:          {
         description: "If set, running Homebrew on Linux will simulate certain macOS code paths. This is useful " \
                      "when auditing macOS formulae while on Linux.",
@@ -827,7 +833,7 @@ module Homebrew
     sig { params(env: Symbol, hash: T::Hash[Symbol, T.untyped]).returns(String) }
     def env_method_name(env, hash)
       method_name = env.to_s
-                       .sub(/^HOMEBREW_/, "")
+                       .sub(/^(HOMEBREW_|EVILBREW_)/, "")
                        .downcase
       method_name = "#{method_name}?" if hash[:boolean]
       method_name

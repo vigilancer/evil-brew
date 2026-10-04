@@ -129,6 +129,7 @@ module OS
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_unsupported_macos
           return if Homebrew::EnvConfig.developer?
+          return if Homebrew::EnvConfig.shut_up_about_unsupported_os?
           return if ENV["HOMEBREW_INTEGRATION_TEST"]
 
           tier = 2
