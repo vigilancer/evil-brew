@@ -729,6 +729,12 @@ module Homebrew
                      "when auditing macOS formulae while on Linux.",
         boolean:     true,
       },
+      HOMEBREW_ODEPRECATED_AND_I_DONT_CARE:       {
+        description: "If set, do not warn that an environment variable with `odeprecated: true` is deprecated. " \
+                     "Set by default. Add `unset HOMEBREW_ODEPRECATED_AND_I_DONT_CARE` to `brew.env` " \
+                     "to show those warnings again.",
+        boolean:     :set,
+      },
       HOMEBREW_SKIP_OR_LATER_BOTTLES:            {
         description: "If set along with `$HOMEBREW_DEVELOPER`, do not use bottles from older versions " \
                      "of macOS. This is useful in development on new macOS versions.",
@@ -985,6 +991,7 @@ module Homebrew
     sig { params(env: String, hash: T::Hash[Symbol, T.untyped]).void }
     def odeprecated_env(env, hash)
       return if !hash[:odeprecated] && !hash[:odisabled]
+      return if hash[:odeprecated] && odeprecated_and_i_dont_care?
       return unless env_deprecation_applies?(hash)
 
       replacement = hash[:replacement] if hash.key?(:replacement)
