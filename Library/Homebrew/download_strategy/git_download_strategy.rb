@@ -66,6 +66,18 @@ class GitDownloadStrategy < VCSDownloadStrategy
       .success?
   end
 
+  sig { override.returns(String) }
+  def manual_fetch_command
+    require "shellwords"
+    dest = cached_location.to_s.shellescape
+    clone = ["git", "clone", "--config", "advice.detachedHead=false", "--config", "core.fsmonitor=false"]
+    clone += ["--branch", @ref] if [:branch, :tag].include?(@ref_type) && @ref.present?
+    clone += ["--", url, cached_location.to_s]
+    command = "rm -rf #{dest} && #{clone.shelljoin}"
+    command = "#{command} && git -C #{dest} checkout -f #{@ref.to_s.shellescape} --" if @ref.present?
+    command
+  end
+
   sig { returns(T::Array[String]) }
   def clone_args
     args = %w[clone]

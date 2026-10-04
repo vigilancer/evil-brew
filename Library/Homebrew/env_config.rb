@@ -818,6 +818,11 @@ module Homebrew
                      "Set by default. Add `unset HOMEBREW_INFO_VERBOSE` to `brew.env` to turn it off.",
         boolean:     true,
       },
+      HOMEBREW_FETCH_PRINT_COMMAND:              {
+        description: "If set, print a command that downloads each file or repository into the Homebrew cache. " \
+                     "Set by default. Add `unset HOMEBREW_FETCH_PRINT_COMMAND` to `brew.env` to turn it off.",
+        boolean:     true,
+      },
       HOMEBREW_VERBOSE_USING_DOTS:               {
         description: "If set, verbose output will print a `.` no more than once a minute. This can be " \
                      "useful to avoid long-running Homebrew commands being killed due to no output.",
