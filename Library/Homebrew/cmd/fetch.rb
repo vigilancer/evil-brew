@@ -47,6 +47,9 @@ module Homebrew
                             "exponential backoff."
         switch "--deps",
                description: "Also download dependencies for any listed <formula>."
+        switch "--print-command",
+               description: "Print a command that downloads each file or repository into the Homebrew cache. " \
+                            "Also enabled by `$EVILBREW_FETCH_PRINT_COMMAND`, which is set by default."
         switch "-s", "--build-from-source",
                description: "Download source packages rather than a bottle."
         switch "--build-bottle",
@@ -78,6 +81,8 @@ module Homebrew
 
       sig { override.void }
       def run
+        ENV["EVILBREW_FETCH_PRINT_COMMAND"] = "1" if args.print_command?
+
         Formulary.enable_factory_cache!
 
         if enqueue_api_formula_bottles? || enqueue_api_cask_downloads?

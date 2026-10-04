@@ -79,6 +79,13 @@ class AbstractDownloadStrategy
     Context.current.quiet? || @quiet || false
   end
 
+  # A command that downloads this resource into {#cached_location}.
+  # Printed during fetch so a stalled download can be resumed by hand.
+  sig { returns(T.nilable(String)) }
+  def manual_fetch_command
+    nil
+  end
+
   sig { params(downloader: AbstractDownloadStrategy).returns(T::Boolean) }
   def self.expand_deferred_environment_for?(downloader)
     HOMEBREW_CONTROLLED_STRATEGIES.include?(downloader.class)
