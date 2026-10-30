@@ -19,13 +19,13 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@e99025eb970cfa124b8284a35463d87426917478 # 2026.09.28.1
+        uses: Homebrew/actions/setup-homebrew@d482da0e602890d3160aade42e72c8556103bf04 # 2026.10.26.1
         with:
           core: false
           cask: false
 
       - name: Set up Ruby
-        uses: Homebrew/actions/setup-ruby@e99025eb970cfa124b8284a35463d87426917478 # 2026.09.28.1
+        uses: Homebrew/actions/setup-ruby@d482da0e602890d3160aade42e72c8556103bf04 # 2026.10.26.1
         with:
           portable-ruby: true
 
