@@ -181,7 +181,7 @@ GEM
       google-protobuf (~> 4.31)
     sass-embedded (1.106.1-x86_64-linux-gnu)
       google-protobuf (~> 4.31)
-    sorbet-runtime (0.6.13591)
+    sorbet-runtime (0.6.13612)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
     tomlrb (3.0.0)
@@ -306,7 +306,7 @@ CHECKSUMS
   sass-embedded (1.106.1-arm64-darwin) sha256=16a8481233712d3050741aae7e46cd35f2ae65493a197967af0a9efef7324f9f
   sass-embedded (1.106.1-x86_64-darwin) sha256=e993d6803ae98c80e6fa71e2ceea8a5699517ee6dd6b1162cff456e5a0ccb4a6
   sass-embedded (1.106.1-x86_64-linux-gnu) sha256=2d0fb805f990a8328aa590cb201efbe21e26c98364107632e0ea5fc6b4a988c6
-  sorbet-runtime (0.6.13591) sha256=ef9d316efe9e63fd149b83c86d647891298124ff54c5783494c5990dde5445a6
+  sorbet-runtime (0.6.13612) sha256=a2dbdac03698445fc4d5d0d172e505645c34fe21ad8ace910cf8832a6ee775f4
   terminal-table (3.0.2) sha256=f951b6af5f3e00203fb290a669e0a85c5dd5b051b3b023392ccfd67ba5abae91
   tomlrb (3.0.0) sha256=e7122820cbb9b940d1758eecb6d1d4ee97c582efa37f06e0100a97cb17a566f5
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
