@@ -609,15 +609,15 @@ module Homebrew
             puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
           if runtime_deps.present?
-            installed_count = runtime_deps.count do |dep|
-              dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
-              next false unless dep_name
+            runtime_names = runtime_deps.filter_map do |dep|
+              full_name = dep["full_name"]
+              next if full_name.blank?
 
-              Formula.rack_installed?(dep_name)
+              dep_name = Utils.name_from_full_name(full_name)
+              installed = Formula.rack_installed?(dep_name)
+              pretty_install_status(dep_name, installed:, mark_uninstalled: !outdated, bold: false)
             end
-            puts "Recursive Runtime (#{runtime_deps.count}): " \
-                 "#{self.class.dependency_status_counts(installed_count, runtime_deps.count,
-                                                        mark_uninstalled: !outdated)}"
+            puts "Recursive Runtime (#{runtime_names.count}): #{runtime_names.join(", ")}"
           end
         end
 
