@@ -127,6 +127,7 @@ BIN_BREW_EXPORTED_VARS_REGEX="^(${BIN_BREW_EXPORTED_VARS_REGEX%|})(=|$)"
 # Load Homebrew's variable configuration files from disk.
 EVILBREW_DEFAULT_ON=(
   EVILBREW_SHUT_UP_ABOUT_UNSUPPORTED_OS
+  EVILBREW_BUILD_FROM_SOURCES_YOU_PHILISTINE
 )
 
 export_homebrew_env_file() {
