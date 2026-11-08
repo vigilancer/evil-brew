@@ -297,6 +297,12 @@ module Downloadable
 
     begin
       downloader.quiet! if quiet
+      if Homebrew::EnvConfig.fetch_print_command? && (command = downloader.manual_fetch_command)
+        $stderr.puts
+        $stderr.puts "#{download_queue_message}:"
+        $stderr.puts "  #{command}"
+        $stderr.puts
+      end
       downloader.fetch(timeout:)
     rescue ErrorDuringExecution, CurlDownloadStrategyError => e
       raise DownloadError.new(self, e)
