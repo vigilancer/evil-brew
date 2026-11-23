@@ -471,14 +471,11 @@ module Homebrew
           dependency_lines << "Missing libraries (#{missing_library_names.count}): #{decorated}"
         end
         if runtime_deps.present?
-          installed_count = runtime_deps.count do |dep|
-            dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
-            next false unless dep_name
-
-            Formula.rack_installed?(dep_name)
-          end
-          dependency_lines << Utils::InfoDisplay.recursive_runtime_line(
-            installed_count, runtime_deps.count, mark_uninstalled: !outdated
+          runtime_names = runtime_deps.map do |dep|
+            dep["full_name"]&.then { Utils.name_from_full_name(it) }
+          end.compact
+          dependency_lines << Utils::InfoDisplay.recursive_runtime_lines(
+            runtime_names, mark_uninstalled: !outdated
           )
         end
         if $stdout.tty? && kegs.any?
