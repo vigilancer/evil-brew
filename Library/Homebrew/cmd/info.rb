@@ -184,6 +184,55 @@ module Homebrew
         end.sort.uniq
       end
 
+      # Installed formulae that declare `formula` as a dependency, grouped the way
+      # `brew uses` classifies them. Implicit deps are listed only as implicit:
+      # Homebrew tags those with `:build` and `:test` as well.
+      sig { params(formula: Formula).returns(T::Array[String]) }
+      def self.installed_dependent_lines(formula)
+        names_by_type = T.let({
+          "Build"       => [],
+          "Required"    => [],
+          "Recommended" => [],
+          "Optional"    => [],
+          "Test"        => [],
+          "Implicit"    => [],
+        }, T::Hash[String, T::Array[String]])
+
+        Formula.installed.each do |dependent|
+          next if dependent.full_name == formula.full_name
+
+          dependent.deps.each do |dep|
+            next unless dependency_named?(dep, formula)
+
+            if dep.implicit?
+              names_by_type.fetch("Implicit") << dependent.full_name
+            else
+              names_by_type.fetch("Build") << dependent.full_name if dep.build?
+              names_by_type.fetch("Test") << dependent.full_name if dep.test?
+              names_by_type.fetch("Optional") << dependent.full_name if dep.optional?
+              names_by_type.fetch("Recommended") << dependent.full_name if dep.recommended?
+              names_by_type.fetch("Required") << dependent.full_name if dep.required?
+            end
+          end
+        end
+
+        names_by_type.filter_map do |type, names|
+          names = names.uniq.sort
+          next if names.empty?
+
+          "#{type} (#{names.length}): #{names.join(", ")}"
+        end
+      end
+
+      sig { params(dep: Dependency, formula: Formula).returns(T::Boolean) }
+      def self.dependency_named?(dep, formula)
+        dep_name = dep.name
+        dep_name = Utils.name_from_full_name(dep_name) if dep_name.include?("/")
+        formula.possible_names.include?(dep_name)
+      rescue FormulaUnavailableError
+        false
+      end
+
       sig { params(quiet: T::Boolean).void }
       def print_info(quiet: false)
         objects = args.named.to_formulae_and_casks_and_unavailable(method: :resolve_cask, uniq: false)
@@ -433,16 +482,8 @@ module Homebrew
           )
         end
         if $stdout.tty? && kegs.any?
-          { "Dependents" => false, "Build dependents" => true }.each do |type, build|
-            names = self.class.installed_dependent_names(formula.possible_names, build:)
-            next if names.empty?
-
-            dependency_lines << if verbose
-              "#{type} (#{names.count}): #{names.join(", ")}"
-            else
-              "#{type}: #{names.count}"
-            end
-          end
+          dependent_lines = self.class.installed_dependent_lines(formula)
+          dependency_lines << Utils::InfoDisplay.section("Dependents", dependent_lines) if dependent_lines.present?
         end
         puts Utils::InfoDisplay.section("Dependencies", dependency_lines) if dependency_lines.present?
 
