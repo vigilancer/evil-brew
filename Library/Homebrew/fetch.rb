@@ -17,6 +17,7 @@ module Homebrew
       bottle = formula.bottle
 
       return true if force_bottle && bottle.present?
+      return false if Homebrew::EnvConfig.build_from_sources_you_philistine?
       if os.present?
         return true
       elsif ENV["HOMEBREW_TEST_GENERIC_OS"].present?

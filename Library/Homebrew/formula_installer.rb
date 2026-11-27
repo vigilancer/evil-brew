@@ -237,7 +237,8 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
 
   sig { returns(T::Boolean) }
   def build_from_source?
-    @build_from_source_formulae.include?(formula.full_name)
+    Homebrew::EnvConfig.build_from_sources_you_philistine? ||
+      @build_from_source_formulae.include?(formula.full_name)
   end
 
   sig { returns(T::Boolean) }
@@ -309,6 +310,7 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
   sig { params(dep: Formula, build: BuildOptions).returns(T::Boolean) }
   def install_bottle_for?(dep, build)
     return pour_bottle? if dep == formula
+    return false if Homebrew::EnvConfig.build_from_sources_you_philistine?
 
     (
       @build_from_source_formulae.exclude?(dep.full_name) &&
