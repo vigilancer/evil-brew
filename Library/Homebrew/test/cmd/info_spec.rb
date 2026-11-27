@@ -938,7 +938,8 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  it "lists installed dependents inline under Dependencies with --verbose" do
+
+  it "lists installed dependents grouped in the Dependents section" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new(["--verbose"])
@@ -955,27 +956,28 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.tabfile = keg_path/AbstractTab::FILENAME
     tab.write
 
-    %w[some-dependent another-dependent].each do |dependent_name|
-      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
-      dependent_keg_path.mkpath
-      dependent_tab = Tab.empty
-      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
-      dependent_tab.runtime_dependencies = [
-        { "full_name" => "testball", "version" => "0.1" },
-      ]
-      dependent_tab.write
+    some_dependent = formula("some-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/some-dependent-1.0.tar.gz"
+      depends_on "testball"
     end
+    another_dependent = formula("another-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/another-dependent-1.0.tar.gz"
+      depends_on "testball"
+    end
+    allow(Formula).to receive(:installed).and_return([some_dependent, another_dependent])
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
 
     expect { info.info_formula(formula) }
-      .to output(/^Dependents \(2\): another-dependent, some-dependent$/).to_stdout
+      .to output(/==> Dependents\nRequired \(2\): another-dependent, some-dependent/).to_stdout
       .and not_to_output(/^Dependents: /).to_stdout
       .and not_to_output.to_stderr
   end
 
-  it "lists installed dependents built from source that need the formula to build" do
+  it "groups installed dependents that declare a build dependency" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new(["--verbose"])
@@ -993,27 +995,23 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.tabfile = keg_path/AbstractTab::FILENAME
     tab.write
 
-    { "source-dependent" => false, "bottle-dependent" => true }.each do |dependent_name, poured_from_bottle|
-      stub_formula_loader(formula(dependent_name) do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/#{dependent_name}-1.0.tar.gz"
-
-        depends_on "testball" => :build
-      end)
-
-      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
-      dependent_keg_path.mkpath
-      dependent_tab = Tab.empty
-      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
-      dependent_tab.poured_from_bottle = poured_from_bottle
-      dependent_tab.write
+    source_dependent = formula("source-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/source-dependent-1.0.tar.gz"
+      depends_on "testball" => :build
     end
+    bottle_dependent = formula("bottle-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/bottle-dependent-1.0.tar.gz"
+      depends_on "testball" => :build
+    end
+    allow(Formula).to receive(:installed).and_return([source_dependent, bottle_dependent])
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
 
     expect { info.info_formula(formula) }
-      .to output(/^Build dependents \(1\): source-dependent$/).to_stdout
+      .to output(/==> Dependents\nBuild \(2\): bottle-dependent, source-dependent/).to_stdout
       .and not_to_output(/^Dependents/).to_stdout
       .and not_to_output.to_stderr
   end
@@ -1035,32 +1033,40 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.tabfile = keg_path/AbstractTab::FILENAME
     tab.write
 
-    {
-      "alias-dependent"     => "testball",
-      "oldname-dependent"   => "old-testball",
-      "qualified-dependent" => "homebrew/core/testball",
-      "other-dependent"     => "other-formula",
-    }.each do |dependent_name, dependency_name|
-      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
-      dependent_keg_path.mkpath
-      dependent_tab = Tab.empty
-      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
-      dependent_tab.runtime_dependencies = [
-        { "full_name" => dependency_name, "version" => "1.0" },
-      ]
-      dependent_tab.write
+    alias_dependent = formula("alias-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/alias-dependent-1.0.tar.gz"
+      depends_on "testball"
     end
+    oldname_dependent = formula("oldname-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/oldname-dependent-1.0.tar.gz"
+      depends_on "old-testball"
+    end
+    qualified_dependent = formula("qualified-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/qualified-dependent-1.0.tar.gz"
+      depends_on "homebrew/core/testball"
+    end
+    other_dependent = formula("other-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/other-dependent-1.0.tar.gz"
+      depends_on "other-formula"
+    end
+    allow(Formula).to receive(:installed).and_return(
+      [alias_dependent, oldname_dependent, qualified_dependent, other_dependent],
+    )
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(aliases: ["testball"], core_formula?: false,
                                        missing_library_linkage: [[], Set.new], oldnames: ["old-testball"])
 
     expect { info.info_formula(formula) }
-      .to output(/^Dependents \(3\): alias-dependent, oldname-dependent, qualified-dependent$/).to_stdout
+      .to output(/==> Dependents\nRequired \(3\): alias-dependent, oldname-dependent, qualified-dependent/).to_stdout
       .and not_to_output.to_stderr
   end
 
-  it "falls back to formula definitions only for installed dependents whose receipts have no list" do
+  it "groups installed dependents declared via formula definitions when their receipts have no list" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     info = described_class.new(["--verbose"])
@@ -1078,27 +1084,23 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.tabfile = keg_path/AbstractTab::FILENAME
     tab.write
 
-    { "no-list-dependent" => nil, "stale-list-dependent" => [] }.each do |dependent_name, runtime_dependencies|
-      stub_formula_loader(formula(dependent_name) do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/#{dependent_name}-1.0.tar.gz"
-
-        depends_on "testball"
-      end)
-
-      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
-      dependent_keg_path.mkpath
-      dependent_tab = Tab.empty
-      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
-      dependent_tab.runtime_dependencies = runtime_dependencies
-      dependent_tab.write
+    no_list_dependent = formula("no-list-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/no-list-dependent-1.0.tar.gz"
+      depends_on "testball"
     end
+    stale_list_dependent = formula("stale-list-dependent") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/stale-list-dependent-1.0.tar.gz"
+      depends_on "testball"
+    end
+    allow(Formula).to receive(:installed).and_return([no_list_dependent, stale_list_dependent])
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
 
     expect { info.info_formula(formula) }
-      .to output(/^Dependents \(1\): no-list-dependent$/).to_stdout
+      .to output(/==> Dependents\nRequired \(2\): no-list-dependent, stale-list-dependent/).to_stdout
       .and not_to_output.to_stderr
   end
 
