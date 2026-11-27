@@ -2583,6 +2583,13 @@ RSpec.describe Homebrew::Cmd::Info do
             .to eq(formula_path.to_s)
         end
       end
+
+    it "sets verbose when EVILBREW_INFO_VERBOSE is set" do
+      ENV["EVILBREW_INFO_VERBOSE"] = "1"
+      expect(described_class.new([]).args.verbose?).to be true
+    ensure
+      ENV.delete("EVILBREW_INFO_VERBOSE")
+    end
     end
   end
 end
