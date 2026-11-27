@@ -252,6 +252,14 @@ module Utils
       "Recursive Runtime (#{total_count}): #{status_counts}"
     end
 
+    sig { params(runtime_names: T::Array[String], mark_uninstalled: T::Boolean).returns(String) }
+    def self.recursive_runtime_lines(runtime_names, mark_uninstalled: true)
+      formatted = runtime_names.map do |name|
+        pretty_install_status(name, installed: Formula.rack_installed?(name), mark_uninstalled:)
+      end
+      "Recursive Runtime (#{runtime_names.size}): #{formatted.join(', ')}"
+    end
+
     sig { params(formula: Formula).returns(T::Array[String]) }
     def self.formula_metadata_lines(formula)
       metadata = T.let([], T::Array[String])
