@@ -463,6 +463,11 @@ module Homebrew
                      "controls set through DSL usage inside formulae. Must be `allow` or `deny`. If no value is " \
                      "set through this environment variable or DSL usage, the default behaviour is `allow`.",
       },
+      EVILBREW_FORMULA_OVERLAY:                  {
+        description: "A directory of formula files. If `<name>.rb` exists here, Homebrew uses that file " \
+                     "instead of the API formula of the same name, including for `homebrew/core/<name>`. " \
+                     "When unset, Homebrew uses `~/.homebrew/formula-overlays`. A missing directory is ignored.",
+      },
       HOMEBREW_FORMULA_TEST_NETWORK:             {
         description: "If set, controls network access to the sandbox for formulae test. Overrides any " \
                      "controls set through DSL usage inside formulae. Must be `allow` or `deny`. If no value is " \
@@ -1079,6 +1084,19 @@ module Homebrew
       end
 
       [concurrency, 1].max
+    end
+
+    sig { returns(String) }
+    def formula_overlay_path
+      raw = ENV.fetch("EVILBREW_FORMULA_OVERLAY", "").presence
+      raw = "~/.homebrew/formula-overlays" if raw.blank?
+      File.expand_path(raw)
+    end
+
+    sig { returns(T.nilable(Pathname)) }
+    def formula_overlay_directory
+      directory = Pathname(formula_overlay_path)
+      directory if directory.directory?
     end
   end
 end
