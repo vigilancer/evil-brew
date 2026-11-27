@@ -46,6 +46,9 @@ module Homebrew
                             "exponential backoff."
         switch "--deps",
                description: "Also download dependencies for any listed <formula>."
+        switch "--print-command",
+               description: "Print a command that downloads each file or repository into the Homebrew cache. " \
+                            "Also enabled by `$EVILBREW_FETCH_PRINT_COMMAND`, which is set by default."
         switch "--test",
                description: "Also download test resources and their patches for each <formula>."
         switch "-s", "--build-from-source",

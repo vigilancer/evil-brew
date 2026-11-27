@@ -200,6 +200,14 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     args
   end
 
+  sig { override.returns(String) }
+  def manual_fetch_command
+    require "shellwords"
+    incomplete = temporary_path.to_s.shellescape
+    destination = cached_location.to_s.shellescape
+    "curl -fL --retry 3 --continue-at - --output #{incomplete} #{url.shellescape} && mv #{incomplete} #{destination}"
+  end
+
   private
 
   sig { params(first_url: String, second_url: String).returns(T::Boolean) }
